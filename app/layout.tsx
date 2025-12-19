@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Kart Number Manager - Spark Racing',
+  title: 'Spark Racing Sprint Cup',
   description: 'Manage kart number assignments for racing sessions',
 }
 

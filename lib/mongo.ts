@@ -1,9 +1,9 @@
 import { MongoClient, Db } from 'mongodb'
 
-// Prefer env vars, but default to provided Atlas connection string for now
+// Default to local MongoDB; can be overridden via env (recommended for Atlas)
 const uri =
   process.env.MONGODB_URI ||
-  'mongodb+srv://shehansilva2013_db_user:9pgXxokttGHB88Yx@cluster0.dwzgfvc.mongodb.net/?appName=Cluster0'
+  'mongodb://127.0.0.1:27017/spark-kart-manager'
 
 // Use explicit DB name; can be overridden via env
 const dbName = process.env.MONGODB_DB || 'spark-kart-manager'

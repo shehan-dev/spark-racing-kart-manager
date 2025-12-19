@@ -64,6 +64,37 @@ function getNextKartNumber(availableKartNumbers: number[], current: number | nul
   return availableKartNumbers[nextIdx]
 }
 
+function getGridSortKey(driver: Driver, state: EventState): number {
+  const total = state.drivers.length
+
+  switch (state.currentRound) {
+    case 'qualification': {
+      // For quali just keep grid roughly by current kart number
+      return driver.currentKartNumber ?? Number.MAX_SAFE_INTEGER
+    }
+    case 'race1': {
+      // Reverse official Qualifying results: slowest starts P1, fastest last
+      const pos = driver.results.qualification?.position
+      if (!pos) return total + 1
+      return total - pos + 1
+    }
+    case 'race2': {
+      // Reverse official Race 1 results
+      const pos = driver.results.race1?.position
+      if (!pos) return total + 1
+      return total - pos + 1
+    }
+    case 'race3': {
+      // Grid based on Race 2 official results (normal order)
+      const pos = driver.results.race2?.position
+      if (!pos) return total + 1
+      return pos
+    }
+    default:
+      return Number.MAX_SAFE_INTEGER
+  }
+}
+
 export default function Home() {
   const [eventState, setEventState] = useState<EventState | null>(null)
 
@@ -126,13 +157,23 @@ export default function Home() {
     const kartNumbers = parseKartNumbers(kartNumbersInput)
     if (!kartNumbers.length || driverNames.length === 0) return
 
+    // Do not allow more drivers than available karts
+    if (driverNames.length > kartNumbers.length) {
+      alert(
+        `Number of drivers (${driverNames.length}) cannot exceed number of karts (${kartNumbers.length}).\n` +
+          'Please add more kart numbers or remove some drivers.',
+      )
+      return
+    }
+
     const shuffled = [...kartNumbers].sort(() => Math.random() - 0.5)
 
     const drivers: Driver[] = driverNames.map((name, index) => ({
       id: `${Date.now()}-${index}`,
       name: name.trim(),
       category,
-      currentKartNumber: shuffled[index % shuffled.length] ?? null,
+      // Each driver gets exactly one kart from the shuffled list
+      currentKartNumber: shuffled[index] ?? null,
       results: {},
       totalPoints: 0,
     }))
@@ -424,7 +465,7 @@ export default function Home() {
             <tbody>
               {drivers
                 .slice()
-                .sort((a, b) => (a.currentKartNumber ?? 0) - (b.currentKartNumber ?? 0))
+                .sort((a, b) => getGridSortKey(a, eventState) - getGridSortKey(b, eventState))
                 .map((driver) => {
                   const roundResult =
                     eventState.currentRound === 'qualification'
